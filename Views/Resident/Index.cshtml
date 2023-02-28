@@ -1,0 +1,484 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid" ng-controller="barangayResidentCtrl">
+    <div class="row">
+        <div class="col-lg-12 col-md-3" ng-init="ResidentList()" ng-if="ShowResident">
+            <h1 class="page-header">
+                Residents
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#AddResidentModal">Add+</button>
+
+
+            </h1>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <p>This is official resident table</p>
+                    <p>
+                        Show <select ng-model="pageSize" id="pageSize">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="15">15</option>
+                            <option value="20">20</option>
+                        </select> entries
+                        <input type="text" ng-model="q" id="search" class="col-sm-1 form-control pull-right" placeholder="search" />
+                    </p>
+
+                </div>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">FullName</th>
+                            <th scope="col">Age</th>
+                            <th scope="col">Gender</th>
+                            <th scope="col">Current Address</th>
+                            <th scope="col">Type of ownership</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="resident in GetResidentResult | filter:q | startFrom:currentPage*pageSize | limitTo:pageSize  track by $index" ng-if="GetResidentResult[$index -1] != resident">
+                            <th colspan="1">{{$index+1}}</th>
+                            <td>{{resident.last_Name}}, {{resident.first_Name}} </td>
+                            <td>{{ resident.birthdate | ageFilter  }}</td>
+                            <td ng-if="resident.gender == 'female'"><span class="label label-pink"><i class="fa fa-venus" aria-hidden="true"></i></span></td>
+                            <td ng-if="resident.gender == 'male'"><span class="label label-info"><i class="fa fa-mars" aria-hidden="true"></i></span></td>
+                            <td>{{resident.household_no}}</td>
+                            <td>{{resident.residency_status}}</td>
+                            <td id="td_check"><label class="lblvoters"><input type="checkbox" ng-model="resident.voters" ng-checked="resident.voters" ng-disabled="true"></label></td>
+                            <td><button class="btn btn-primary" ng-click="BtnViewResident(resident.residential_id)">View</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+
+
+            </div>
+            <div>
+                <button ng-disabled="currentPage == 0" ng-click="currentPage=currentPage-1">
+                    Previous
+                </button> {{currentPage+1}}/{{numberOfPages()}}
+                <button ng-disabled="currentPage >= SearchResident().length/pageSize - 1" ng-click="currentPage=currentPage+1">
+                    Next
+                </button>
+            </div>
+
+        </div>
+        <div class="col-lg-12" ng-if="ShowResidentDetails">
+            <h1 class="page-header">Residents Details</h1>
+
+            <p>
+                <a href="@Url.Action("Index","Home",new { area = "" })" class="btn btn-danger" ng-click="OnReturnPage()">Back</a>
+                <div class="row">
+                    <div class="col-lg-3 col-md-3">
+                        <div class="panel panel-default">
+                            <div class="panel-body">
+                                <div class="profile-sidebar">
+                                    <div class="profileuser-pic" ng-if="GetResidentByIdResult.Files.length==0">
+                                        <img ng-src="~/images/userprofile.png" class="img-responsive" alt="">
+                                    </div>
+                                    <div class="profileuser-pic" ng-else>
+                                        <img ng-src="~/uploadImage/{{GetResidentByIdResult.Files[0].FileName}}" class="img-responsive" alt="">
+                                    </div>
+
+                                    <div class="profile-usertitle">
+                                        <div class="profile-usertitle-name">
+                                            {{GetResidentByIdResult.first_Name}}
+                                        </div>
+                                    </div>
+                                    <div class="profile-upload">
+                                        <a href="#" class="btn" data-toggle="modal" data-target="#UploadImageModal">Update</a>
+                                    </div>
+                                </div>
+                                <div class="profile-usermenu">
+                                    <ul class="nav">
+                                        <li class="active">
+                                            <a href="#tab1" data-toggle="tab">
+                                                <i class="glyphicon glyphicon-home"></i>
+                                                Overview
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="#tab2" data-toggle="tab">
+                                                <i class="glyphicon glyphicon-user"></i>
+                                                Account Settings
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-9 col-md-4">
+                        <div ng-class="{'panel panel-info':GetResidentByIdResult.voters == true, 'panel panel-danger' :GetResidentByIdResult.voters == false }" class="panel panel-info">
+                            <div class="panel-heading">View</div>
+                            <div class="panel-body">
+                                <div class="tab-content">
+                                    <div class="tab-pane fade in active" id="tab1">
+                                        <div class="row">
+                                            <div class="col-md-10">
+                                                <strong>Information</strong><br>
+                                                <div class="table-responsive">
+                                                    <table class="table table-user-information">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong> <span class="glyphicon glyphicon-asterisk text-primary"></span> Identificacion </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    123456789
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong><span class="glyphicon glyphicon-user  text-primary"></span>FullName </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{GetResidentByIdResult.last_Name}}, {{GetResidentByIdResult.first_Name}} {{GetResidentByIdResult.Suffix}}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong> <span class="glyphicon glyphicon-cloud text-primary"></span>  Age </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{ GetResidentByIdResult.birthdate | ageFilter }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong><span class="glyphicon glyphicon-bookmark text-primary"></span>Gender</strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{ GetResidentByIdResult.gender }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>  <span class="glyphicon glyphicon-eye-open text-primary"></span> marital status </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{ GetResidentByIdResult.marital_status }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong> <span class="glyphicon glyphicon-envelope text-primary"></span>  Email  </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{ GetResidentByIdResult.email_add }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong><span class="glyphicon glyphicon-calendar text-primary"></span> contact no </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{ GetResidentByIdResult.contact_no }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>
+                                                                        <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                                                        Address
+                                                                    </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{ GetResidentByIdResult.household_no }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>
+                                                                        <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                                                        Zone no.
+                                                                    </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{ GetResidentByIdResult.zone_no }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>
+                                                                        <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                                                        Barangay
+                                                                    </strong>
+                                                                </td>
+
+                                                                <td class="text-primary">
+                                                                    {{GetResidentByIdResult.barangay_name }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>
+                                                                        <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                                                        length of stay
+                                                                    </strong>
+                                                                </td>
+
+                                                                <td class="text-primary">
+                                                                    {{GetResidentByIdResult.length_of_stay }} (in months)
+                                                                </td>
+                                                            </tr>
+
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>
+                                                                        <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                                                        Religion
+                                                                    </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{GetResidentByIdResult.religion_name }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>
+                                                                        <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                                                        Nationality
+                                                                    </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{GetResidentByIdResult.nationality_name }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>
+                                                                        <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                                                        Occupation
+                                                                    </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{GetResidentByIdResult.occupation }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>
+                                                                        <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                                                        Philhealth
+                                                                    </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{GetResidentByIdResult.Philhealth_no }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <strong>
+                                                                        <span class="glyphicon glyphicon-calendar text-primary"></span>
+                                                                        Voters
+                                                                    </strong>
+                                                                </td>
+                                                                <td class="text-primary">
+                                                                    {{GetResidentByIdResult.voters == true ? 'Voters' : 'non- voters' }}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade in" id="tab2">
+                                        <div class="row">
+                                            <div class="col-lg-12 col-md-3">
+
+                                                    <form  name="myForm" class="form-vertical" novalidate id="myForm" form-on-change="OnCancelBtn()">
+                                                        <div class="row">
+
+                                                            <div class="col-lg-2">
+                                                                <div class="form-group">
+                                                                    <label for="firstName">*First Name</label>
+                                                                    <input type="text" name="first_Name" id="first_Name" ng-model="GetResidentByIdResult.first_Name" class="form-control" ng-required="true">
+                                                                    <div class="error" ng-show="myForm.first_Name.$error.required"><small>First name is required</small></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-2">
+                                                                <div class="form-group">
+                                                                    <label for="lastName">*Last Name</label>
+                                                                    <input type="text" id="last_Name" name="last_Name" ng-model="GetResidentByIdResult.last_Name" class="form-control" ng-required="true">
+                                                                    <div class="error" ng-show="myForm.last_Name.$error.required"><small>Last name is required</small></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-1">
+                                                                <div class="form-group">
+                                                                    <label for="Suffix">Suffix</label>
+                                                                    <input type="text" id="Suffix" ng-model="GetResidentByIdResult.Suffix" class="col-sm-1 form-control" autofocus>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-3">
+                                                                <div class="form-group">
+                                                                    <label for="emailadd">Email address</label>
+                                                                    <input type="text" id="emailadd" ng-model="GetResidentByIdResult.email_add" class="col-sm-2 form-control" autofocus>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-2">
+                                                                <div class="form-group">
+                                                                    <label for="birthDate">*Birth date</label>
+                                                                    <div class="input-group">
+                                                                        <input type="text" id="birthDate" name="birthdate" uib-datepicker-popup="{{format}}" ng-model="GetResidentByIdResult.birthdate" datepicker-options="dateOptions" is-open="GetResidentByIdResult.opened" class="form-control " ng-required="true">
+                                                                        <div class="error" ng-show="myForm.birthdate.$error.required"><small>birth date is required</small></div>
+                                                                        <span class="input-group-btn">
+                                                                            <button type="button" class="btn btn-default" ng-click="openCal($event,GetResidentByIdResult)"><i class="glyphicon glyphicon-calendar"></i></button>
+                                                                        </span>
+                                                                    </div>
+
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row">
+                                                            <div class="col-lg-2">
+                                                                <div class="form-group">
+                                                                    <label for="gender">Gender</label>
+                                                                    <select id="gender" name="gender" ng-model="GetResidentByIdResult.gender" class="form-control" ng-required="true">
+                                                                        <option value="male">Male</option>
+                                                                        <option value="female">Female</option>
+                                                                    </select>
+                                                                    <div class="error" ng-show="myForm.gender.$error.required"><small>Gender is required</small></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-2">
+                                                                <div class="form-group">
+                                                                    <label for="marital_status">marital status</label>
+                                                                    <select id="marital_status" name="marital_status" ng-model="GetResidentByIdResult.marital_status" class="form-control" ng-required="true">
+                                                                        <option value="single">Single</option>
+                                                                        <option value="married">Married</option>
+                                                                        <option value="widowed">Widowed</option>
+                                                                    </select>
+                                                                    <div class="error" ng-show="myForm.marital_status.$error.required"><small>Marital status is required</small></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-2">
+                                                                <div class="form-group">
+                                                                    <label for="birthDate">*Contact no.</label>
+                                                                    <input type="text" name="contact_no" ng-model="GetResidentByIdResult.contact_no" id="contact_no" class="form-control" ng-required="true">
+                                                                    <div class="error" ng-show="myForm.contact_no.$error.required"><small>contact is required</small></div>
+
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-3">
+                                                                <div class="form-group">
+                                                                    <label for="occupation">Occupation</label>
+                                                                    <input type="text" id="occupation" ng-model="GetResidentByIdResult.occupation" class="form-control" autofocus>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-lg-3">
+                                                                <div class="form-group">
+                                                                    <label for="religion">Religion</label>
+                                                                    <select id="religion" name="religion" ng-options="item.religion_id as item.religion_name for item in GetReligionList" ng-model="GetResidentByIdResult.religion_id" class="form-control" ng-required="true"></select>
+                                                                    <div class="error" ng-show="myForm.religion.$error.required"><small>religion is required</small></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-3">
+                                                                <div class="form-group">
+                                                                    <label for="nationality">Nationality</label>
+                                                                    <select id="nationality" name="nationality_id" ng-options="item.Nationality_id as item.nationality_name for item in GetNationalityList" ng-model="GetResidentByIdResult.nationality_id" class="form-control" ng-required="true"></select>
+                                                                    <div class="error" ng-show="myForm.nationality_id.$error.required"><small>nationality is required</small></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4">
+                                                                <div class="form-group">
+                                                                    <label for="household_no">*Household no. /Address</label>
+                                                                    <textarea id="household_no" name="household_no" ng-model="GetResidentByIdResult.household_no" class="form-control" ng-required="true"></textarea>
+                                                                    <div class="error" ng-show="myForm.household_no.$error.required"><small>Household no. /Address is required</small></div>
+
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="row">
+
+                                                            <div class="col-lg-2">
+                                                                <div class="form-group">
+                                                                    <label for="zoneno">Zone no.</label>
+                                                                    <input type="text" id="zoneno" ng-model="GetResidentByIdResult.zone_no" class="col-sm-1 form-control" >
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-2">
+                                                                <div class="form-group">
+                                                                    <label for="householdmember">Househould member </label>
+                                                                    <input type="number" name="householdmember" id="householdmember" ng-model="GetResidentByIdResult.household_member" class="col-sm-1 form-control" ng-required="true">
+                                                                    <div class="error" ng-show="myForm.householdmember.$error.required"><small>Househould member is required</small></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-2">
+                                                                <div class="form-group">
+                                                                    <label for="lengthofstay">Length of stay </label>
+                                                                    <input type="number" name="lengthofstay" id="lengthofstay" ng-model="GetResidentByIdResult.length_of_stay" class="col-sm-1 form-control" ng-required="true">
+                                                                    <div class="error" ng-show="myForm.lengthofstay.$error.required"><small>length of stay is required</small></div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-3">
+                                                                <div class="form-group">
+                                                                    <label for="barangay">Barangay</label>
+                                                                    <select id="barangay" name="barangay" ng-options="item.barangay_id as item.barangay_name for item in GetBarangayList" ng-model="GetResidentByIdResult.barangay_id" class="form-control" ng-required="true"></select>
+                                                                    <div class="error" ng-show="myForm.barangay.$error.required"><small>length of stay is required</small></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-lg-1">
+                                                                <div class="form-group">
+                                                                    <label for="voters" style="position: absolute;">voters</label>
+                                                                    <input type="checkbox" id="voters" ng-model="GetResidentByIdResult.voters" ng-checked="GetResidentByIdResult.voters" >
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-3">
+                                                                <div class="form-group">
+                                                                    <label for="philhealthno">Philhealth no.</label>
+                                                                    <input type="text" id="philhealthno" ng-model="GetResidentByIdResult.Philhealth_no" class="form-control" >
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col-lg-3">
+                                                                <div class="form-group">
+                                                                    <label for="residency_status">Ownership</label>
+                                                                    <select id="residency_status" ng-options="item.value as item.option for item in OwnerShip" ng-model="GetResidentByIdResult.residency_status" class="form-control"></select>
+                                                                </div>
+                                                            </div>
+
+
+
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-lg-12 col-md-2 ">
+                                                                <div class="form-group ">
+                                                                    <button class="btn btn-primary" ng-click="AddUpdateResident.click()" ng-disabled="GetResidentByIdResult.length==0 || myForm.$invalid || IsUpdate">Update</button>
+                                                                    <button class="btn btn-danger" ng-click="CancelBtn()" ng-if="IsCancel">Cancel</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </form>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+        </div>
+        <div ng-repeat="temp in templates">
+            <div ng-include="temp.url"></div>
+        </div>
+
+
+        <!-- /.col-lg-12 -->
+    </div>
+</div>
